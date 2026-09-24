@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حاسبة المعدل التراكمي GPA</title>
+<style>
+  :root {
+    --primary: #6C5CE7;
+    --primary-light: #A29BFE;
+    --bg: #F8F9FC;
+    --card: #FFFFFF;
+    --text: #2D3436;
+    --muted: #7A7F87;
+    --border: #E4E6EC;
+    --success: #00B894;
+    --danger: #FF6B6B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Tahoma', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px 16px;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  header h1 {
+    font-size: 26px;
+    margin: 0 0 6px;
+    color: var(--text);
+  }
+  header p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 14px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .scale-select {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .scale-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .scale-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .courses {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .course-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 90px 32px;
+    gap: 8px;
+    align-items: center;
+  }
+  .course-row input, .course-row select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+  }
+  .course-row input:focus, .course-row select:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  .remove-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: #FFECEC;
+    color: var(--danger);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .remove-btn:hover { background: #FFD6D6; }
+  .add-btn {
+    margin-top: 14px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px dashed var(--primary-light);
+    background: transparent;
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .add-btn:hover { background: #F1EFFE; }
+  .result-card {
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+  }
+  .result-card .gpa-value {
+    font-size: 48px;
+    font-weight: bold;
+    margin: 6px 0;
+  }
+  .result-card .gpa-label {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+  .stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.25);
+    font-size: 13px;
+  }
+  .stats div span {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 2px;
+  }
+  .header-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 90px 32px;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: -2px;
+    padding: 0 2px;
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📊 حاسبة المعدل التراكمي</h1>
+    <p>أدخلي مقرراتك ودرجاتها لحساب الـ GPA تلقائيًا</p>
+  </header>
+
+  <div class="card">
+    <div class="scale-select">
+      <button class="scale-btn active" data-scale="5" onclick="setScale(5, this)">نظام 5.00</button>
+      <button class="scale-btn" data-scale="4" onclick="setScale(4, this)">نظام 4.00</button>
+    </div>
+
+    <div class="header-row">
+      <span>اسم المقرر</span>
+      <span>الساعات</span>
+      <span>الدرجة</span>
+      <span></span>
+    </div>
+    <div class="courses" id="courses"></div>
+    <button class="add-btn" onclick="addCourse()">+ إضافة مقرر</button>
+  </div>
+
+  <div class="card result-card">
+    <div class="gpa-label">المعدل التراكمي</div>
+    <div class="gpa-value" id="gpaValue">0.00</div>
+    <div class="stats">
+      <div>إجمالي الساعات<span id="totalHours">0</span></div>
+      <div>عدد المقررات<span id="totalCourses">0</span></div>
+      <div>النقاط<span id="totalPoints">0.0</span></div>
+    </div>
+  </div>
+
+  <footer>الحسابات تتم مباشرة في المتصفح ولا يتم حفظ أي بيانات</footer>
+</div>
+
+<script>
+  let scale = 5;
+  const grades5 = {
+    "A+ (5.00)": 5.00, "A (4.75)": 4.75, "B+ (4.50)": 4.50, "B (4.00)": 4.00,
+    "C+ (3.50)": 3.50, "C (3.00)": 3.00, "D+ (2.50)": 2.50, "D (2.00)": 2.00, "F (1.00)": 1.00
+  };
+  const grades4 = {
+    "A+ (4.00)": 4.00, "A (3.75)": 3.75, "B+ (3.50)": 3.50, "B (3.00)": 3.00,
+    "C+ (2.50)": 2.50, "C (2.00)": 2.00, "D+ (1.50)": 1.50, "D (1.00)": 1.00, "F (0.00)": 0.00
+  };
+
+  function currentGrades() {
+    return scale === 5 ? grades5 : grades4;
+  }
+
+  function setScale(s, btn) {
+    scale = s;
+    document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.grade-select').forEach(sel => {
+      const keep = sel.value;
+      populateGradeSelect(sel);
+      if ([...sel.options].some(o => o.value === keep)) sel.value = keep;
+    });
+    calculate();
+  }
+
+  function populateGradeSelect(select) {
+    select.innerHTML = '';
+    Object.keys(currentGrades()).forEach(label => {
+      const opt = document.createElement('option');
+      opt.value = label;
+      opt.textContent = label;
+      select.appendChild(opt);
+    });
+  }
+
+  function addCourse(name = '', hours = 3, gradeLabel = null) {
+    const row = document.createElement('div');
+    row.className = 'course-row';
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.placeholder = 'مثال: برمجة 1';
+    nameInput.value = name;
+    nameInput.addEventListener('input', calculate);
+
+    const hoursInput = document.createElement('input');
+    hoursInput.type = 'number';
+    hoursInput.min = '1';
+    hoursInput.max = '6';
+    hoursInput.value = hours;
+    hoursInput.addEventListener('input', calculate);
+
+    const gradeSelect = document.createElement('select');
+    gradeSelect.className = 'grade-select';
+    populateGradeSelect(gradeSelect);
+    if (gradeLabel) gradeSelect.value = gradeLabel;
+    gradeSelect.addEventListener('change', calculate);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = '×';
+    removeBtn.onclick = () => { row.remove(); calculate(); };
+
+    row.appendChild(nameInput);
+    row.appendChild(hoursInput);
+    row.appendChild(gradeSelect);
+    row.appendChild(removeBtn);
+
+    document.getElementById('courses').appendChild(row);
+    calculate();
+  }
+
+  function calculate() {
+    const rows = document.querySelectorAll('.course-row');
+    let totalHours = 0;
+    let totalPoints = 0;
+    const gmap = currentGrades();
+
+    rows.forEach(row => {
+      const hours = parseFloat(row.children[1].value) || 0;
+      const gradeLabel = row.children[2].value;
+      const gradeValue = gmap[gradeLabel] ?? 0;
+      totalHours += hours;
+      totalPoints += hours * gradeValue;
+    });
+
+    const gpa = totalHours > 0 ? (totalPoints / totalHours) : 0;
+
+    document.getElementById('gpaValue').textContent = gpa.toFixed(2);
+    document.getElementById('totalHours').textContent = totalHours;
+    document.getElementById('totalCourses').textContent = rows.length;
+    document.getElementById('totalPoints').textContent = totalPoints.toFixed(1);
+  }
+
+  // مقررات ابتدائية كمثال
+  addCourse('', 3);
+  addCourse('', 3);
+  addCourse('', 3);
+</script>
+</body>
+</html>
